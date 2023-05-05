@@ -1,0 +1,54 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id          String    @id @default(uuid())
+  name        String
+  description String
+  projects    Project[]
+}
+
+model University {
+  id          String      @id @default(uuid())
+  name        String
+  description String
+  projects    Project[]
+  students    Student[]
+  professors  Professor[]
+}
+
+model Professor {
+  id           String     @id @default(uuid())
+  name         String
+  description  String
+  students     Student[]
+  universityId String
+  university   University @relation(fields: [universityId], references: [id])
+}
+
+model Student {
+  id           String     @id @default(uuid())
+  name         String
+  description  String
+  professorId  String
+  professor    Professor  @relation(fields: [professorId], references: [id])
+  universityId String
+  university   University @relation(fields: [universityId], references: [id])
+}
+
+model Project {
+  id           String      @id @default(uuid())
+  name         String
+  description  String
+  universityId String?
+  university   University? @relation(fields: [universityId], references: [id])
+  companyId    String?
+  company      Company?    @relation(fields: [companyId], references: [id])
+}
