@@ -3,6 +3,7 @@ import { CreateCompanyDto, UpdateCompanyDto } from './dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CompanyDto } from './dto/company.dto';
 import { CompanyPreviewDto } from './dto/company-preview.dto';
+import { ProjectService } from '@/project/project.service';
 
 @Injectable()
 export class CompanyService {
@@ -12,7 +13,10 @@ export class CompanyService {
     description: true,
   };
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly projectService: ProjectService,
+  ) {}
 
   /**
    * Create a company entity
@@ -32,12 +36,32 @@ export class CompanyService {
    * @param take Number of records to take
    * @returns List of companies
    */
-  async findAll(skip?: number, take?: number): Promise<CompanyPreviewDto[]> {
-    return await this.prisma.company.findMany({
+  async findAll(
+    skip?: number,
+    take?: number,
+    includeProjects?: boolean,
+  ): Promise<CompanyPreviewDto[]> {
+    const result: CompanyPreviewDto[] = [];
+
+    const companies = await this.prisma.company.findMany({
       skip,
       take,
       select: this.#previewSelector,
     });
+
+    companies.forEach((company) => result.push(company));
+
+    if (includeProjects) {
+      for (let i = 0; i < result.length; i++) {
+        const projects = await this.projectService.findCompanyProjects(
+          result[i].id,
+        );
+
+        result[i].projects = projects;
+      }
+    }
+
+    return result;
   }
 
   /**

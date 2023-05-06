@@ -1,6 +1,6 @@
 # Ylabs Assignment
 
-## Setup
+## Start a dev server
 
 ### Install dependencies
 
@@ -26,4 +26,10 @@ Run database migrations
 
 ```bash
 pnpm run prisma:migrate
+```
+
+### Start the server
+
+```bash
+pnpm start:dev
 ```

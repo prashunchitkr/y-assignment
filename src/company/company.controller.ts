@@ -1,17 +1,15 @@
+import { ZodParseBoolPipe, ZodParseIntPipe } from '@/utils/zod';
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
   HttpCode,
+  Param,
+  Patch,
+  Post,
   Query,
 } from '@nestjs/common';
-import { CompanyService } from './company.service';
-import { CreateCompanyDto, UpdateCompanyDto, CompanyPreviewDto } from './dto';
-import { CompanyDto } from './dto/company.dto';
 import {
   ApiCreatedResponse,
   ApiNoContentResponse,
@@ -21,7 +19,9 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { ZodNumberValiatonPipe } from '@/utils/zod-number-validation.pipe';
+import { CompanyService } from './company.service';
+import { CompanyPreviewDto, CreateCompanyDto, UpdateCompanyDto } from './dto';
+import { CompanyDto } from './dto/company.dto';
 
 @Controller('company')
 @ApiTags('Company')
@@ -54,15 +54,22 @@ export class CompanyController {
     type: Number,
     description: 'Number of records to take. Default 10',
   })
+  @ApiQuery({
+    name: 'projects',
+    required: false,
+    type: Boolean,
+    description: 'Include projects dadta in the result',
+  })
   @ApiOkResponse({
     type: [CompanyPreviewDto],
     description: 'The records has been successfully retrieved.',
   })
   async findAll(
-    @Query('skip', new ZodNumberValiatonPipe({ default: 0 })) skip: number,
-    @Query('take', new ZodNumberValiatonPipe({ default: 10 })) take: number,
+    @Query('skip', new ZodParseIntPipe({ default: 0 })) skip: number,
+    @Query('take', new ZodParseIntPipe({ default: 10 })) take: number,
+    @Query('projects', new ZodParseBoolPipe()) includeProjects?: boolean,
   ): Promise<CompanyPreviewDto[]> {
-    return this.companyService.findAll(skip, take);
+    return this.companyService.findAll(skip, take, includeProjects);
   }
 
   @Get('search')
