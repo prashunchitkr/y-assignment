@@ -25,22 +25,22 @@ model University {
 }
 
 model Professor {
-  id           String     @id @default(uuid())
+  id           String      @id @default(uuid())
   name         String
   description  String
   students     Student[]
-  universityId String
-  university   University @relation(fields: [universityId], references: [id])
+  universityId String?
+  university   University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
 }
 
 model Student {
-  id           String     @id @default(uuid())
+  id           String      @id @default(uuid())
   name         String
   description  String
-  professorId  String
-  professor    Professor  @relation(fields: [professorId], references: [id])
-  universityId String
-  university   University @relation(fields: [universityId], references: [id])
+  professorId  String?
+  professor    Professor?  @relation(fields: [professorId], references: [id], onDelete: SetNull)
+  universityId String?
+  university   University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
 }
 
 model Project {
@@ -48,7 +48,7 @@ model Project {
   name         String
   description  String
   universityId String?
-  university   University? @relation(fields: [universityId], references: [id])
+  university   University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
   companyId    String?
-  company      Company?    @relation(fields: [companyId], references: [id])
+  company      Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
 }
