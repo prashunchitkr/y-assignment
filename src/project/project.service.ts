@@ -1,22 +1,69 @@
-import { Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { PrismaService } from '@/prisma/prisma.service';
+import { ProjectDto } from './dto';
+import { CompanyService } from '@/company/company.service';
 
 @Injectable()
 export class ProjectService {
-  constructor(private readonly prisma: PrismaService) {}
+  readonly previewSelector = {
+    id: true,
+    name: true,
+    description: true,
+  };
 
-  create(createProjectDto: CreateProjectDto) {
-    return 'This action adds a new project';
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => CompanyService))
+    private readonly companyService: CompanyService,
+  ) {}
+
+  /**
+   * Create a project entity
+   * @param createProjectDto  Data to create a project entity
+   * @returns Newly created project entity
+   */
+  async create(createProjectDto: CreateProjectDto) {
+    return await this.prisma.project.create({
+      data: createProjectDto,
+      select: this.previewSelector,
+    });
   }
 
   findAll() {
     return `This action returns all project`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} project`;
+  /**
+   * Get a project entity by id
+   * @param id  Project id
+   * @returns Project entity
+   */
+  async findOne(id: string): Promise<ProjectDto> {
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+      select: {
+        ...this.previewSelector,
+        company: {
+          select: this.companyService.previewSelector,
+        },
+        university: {
+          select: this.previewSelector,
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return project;
   }
 
   update(id: number, updateProjectDto: UpdateProjectDto) {
@@ -34,11 +81,7 @@ export class ProjectService {
           id: companyId,
         },
       },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-      },
+      select: this.previewSelector,
     });
   }
 }

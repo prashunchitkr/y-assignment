@@ -7,7 +7,7 @@ import { ProjectService } from '@/project/project.service';
 
 @Injectable()
 export class CompanyService {
-  #previewSelector = {
+  readonly previewSelector = {
     id: true,
     name: true,
     description: true,
@@ -26,14 +26,15 @@ export class CompanyService {
   async create(createCompanyDto: CreateCompanyDto): Promise<CompanyPreviewDto> {
     return await this.prisma.company.create({
       data: createCompanyDto,
-      select: this.#previewSelector,
+      select: this.previewSelector,
     });
   }
 
   /**
-   * Get all companies. Optionally skip and take records.
+   * Get all companies. Optionally include projects and paginate
    * @param skip Number of records to skip
    * @param take Number of records to take
+   * @param includeProjects Include projects in the response
    * @returns List of companies
    */
   async findAll(
@@ -46,19 +47,13 @@ export class CompanyService {
     const companies = await this.prisma.company.findMany({
       skip,
       take,
-      select: this.#previewSelector,
+      select: this.previewSelector,
     });
 
     companies.forEach((company) => result.push(company));
 
     if (includeProjects) {
-      for (let i = 0; i < result.length; i++) {
-        const projects = await this.projectService.findCompanyProjects(
-          result[i].id,
-        );
-
-        result[i].projects = projects;
-      }
+      return await this.#includeProjectsToCompanies(result);
     }
 
     return result;
@@ -66,7 +61,8 @@ export class CompanyService {
 
   /**
    * Search companies by name or description
-   * @param searchCompanyDto  Data to search a company entity
+   * @param name Name to search a company entity
+   * @param description Description to search a company entity
    * @returns List of companies
    */
   async searchByNameAndDescription(
@@ -80,7 +76,7 @@ export class CompanyService {
           description ? { description: { search: description } } : {},
         ],
       },
-      select: this.#previewSelector,
+      select: this.previewSelector,
     });
   }
 
@@ -93,10 +89,7 @@ export class CompanyService {
     const company = await this.prisma.company.findUnique({
       where: { id },
       select: {
-        ...this.#previewSelector,
-        projects: {
-          select: this.#previewSelector,
-        },
+        ...this.previewSelector,
       },
     });
 
@@ -104,7 +97,12 @@ export class CompanyService {
       throw new NotFoundException(`Company with id ${id} doesn't exist`);
     }
 
-    return company;
+    const projects = await this.projectService.findCompanyProjects(id);
+
+    return {
+      ...company,
+      projects,
+    };
   }
 
   /**
@@ -122,9 +120,9 @@ export class CompanyService {
         where: { id },
         data: updateCompanyDto,
         select: {
-          ...this.#previewSelector,
+          ...this.previewSelector,
           projects: {
-            select: this.#previewSelector,
+            select: this.previewSelector,
           },
         },
       });
@@ -147,5 +145,27 @@ export class CompanyService {
     } catch (error) {
       throw new NotFoundException(`Company with id ${id} doesn't exist`);
     }
+  }
+
+  /**
+   * Include associate projects to a list of companies
+   * @param companies List of companies to include projects
+   * @returns List of companies with projects
+   */
+  async #includeProjectsToCompanies(companies: CompanyPreviewDto[]) {
+    const results: CompanyPreviewDto[] = [];
+
+    for (let i = 0; i < companies.length; i++) {
+      const projects = await this.projectService.findCompanyProjects(
+        companies[i].id,
+      );
+
+      results.push({
+        ...companies[i],
+        projects,
+      });
+    }
+
+    return results;
   }
 }
