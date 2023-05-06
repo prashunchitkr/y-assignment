@@ -7,7 +7,7 @@ class ZodValidationPipeOptions {
   default?: number;
 }
 
-export class ZodNumberValiatonPipe implements PipeTransform {
+export class ZodParseIntPipe implements PipeTransform {
   readonly #numericStringSchema: z.ZodEffects<
     z.ZodEffects<z.ZodString, number, string>,
     number,
@@ -36,7 +36,7 @@ export class ZodNumberValiatonPipe implements PipeTransform {
   transform(value: unknown) {
     try {
       if (!value) {
-        if (this.options && this.options.default && this.options.default >= 0) {
+        if (this.options && this.options.default !== undefined) {
           return this.options.default;
         }
         throw new Error('Value must be provided');
