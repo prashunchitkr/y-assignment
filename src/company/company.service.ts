@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CompanyDto } from './dto/company.dto';
 import { CompanyPreviewDto } from './dto/company-preview.dto';
-import { ProjectService } from '@/project/project.service';
 
 @Injectable()
 export class CompanyService {
@@ -13,10 +12,7 @@ export class CompanyService {
     description: true,
   };
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly projectService: ProjectService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Create a company entity
@@ -42,21 +38,18 @@ export class CompanyService {
     take?: number,
     includeProjects?: boolean,
   ): Promise<CompanyPreviewDto[]> {
-    const result: CompanyPreviewDto[] = [];
-
-    const companies = await this.prisma.company.findMany({
+    return await this.prisma.company.findMany({
       skip,
       take,
-      select: this.previewSelector,
+      select: {
+        ...this.previewSelector,
+        ...(includeProjects && {
+          projects: {
+            select: this.previewSelector,
+          },
+        }),
+      },
     });
-
-    companies.forEach((company) => result.push(company));
-
-    if (includeProjects) {
-      return await this.#includeProjectsToCompanies(result);
-    }
-
-    return result;
   }
 
   /**
@@ -90,19 +83,17 @@ export class CompanyService {
       where: { id },
       select: {
         ...this.previewSelector,
+        projects: {
+          select: this.previewSelector,
+        },
       },
     });
 
     if (!company) {
-      throw new NotFoundException(`Company with id ${id} doesn't exist`);
+      throw new Error(`Company with id ${id} doesn't exist`);
     }
 
-    const projects = await this.projectService.findCompanyProjects(id);
-
-    return {
-      ...company,
-      projects,
-    };
+    return company;
   }
 
   /**
@@ -115,22 +106,16 @@ export class CompanyService {
     id: string,
     updateCompanyDto: UpdateCompanyDto,
   ): Promise<CompanyDto> {
-    try {
-      const updatedCompany = await this.prisma.company.update({
-        where: { id },
-        data: updateCompanyDto,
-        select: {
-          ...this.previewSelector,
-          projects: {
-            select: this.previewSelector,
-          },
+    return await this.prisma.company.update({
+      where: { id },
+      data: updateCompanyDto,
+      select: {
+        ...this.previewSelector,
+        projects: {
+          select: this.previewSelector,
         },
-      });
-
-      return updatedCompany;
-    } catch (error) {
-      throw new NotFoundException(`Company with id ${id} doesn't exist`);
-    }
+      },
+    });
   }
 
   /**
@@ -138,34 +123,8 @@ export class CompanyService {
    * @param id Company id
    */
   async remove(id: string) {
-    try {
-      await this.prisma.company.delete({
-        where: { id },
-      });
-    } catch (error) {
-      throw new NotFoundException(`Company with id ${id} doesn't exist`);
-    }
-  }
-
-  /**
-   * Include associate projects to a list of companies
-   * @param companies List of companies to include projects
-   * @returns List of companies with projects
-   */
-  async #includeProjectsToCompanies(companies: CompanyPreviewDto[]) {
-    const results: CompanyPreviewDto[] = [];
-
-    for (let i = 0; i < companies.length; i++) {
-      const projects = await this.projectService.findCompanyProjects(
-        companies[i].id,
-      );
-
-      results.push({
-        ...companies[i],
-        projects,
-      });
-    }
-
-    return results;
+    await this.prisma.company.delete({
+      where: { id },
+    });
   }
 }

@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -69,7 +70,7 @@ export class CompanyController {
     @Query('take', new ZodParseIntPipe({ default: 10 })) take: number,
     @Query('projects', new ZodParseBoolPipe()) includeProjects?: boolean,
   ): Promise<CompanyPreviewDto[]> {
-    return this.companyService.findAll(skip, take, includeProjects);
+    return await this.companyService.findAll(skip, take, includeProjects);
   }
 
   @Get('search')
@@ -94,7 +95,10 @@ export class CompanyController {
     @Query('name') name?: string,
     @Query('description') description?: string,
   ) {
-    return this.companyService.searchByNameAndDescription(name, description);
+    return await this.companyService.searchByNameAndDescription(
+      name,
+      description,
+    );
   }
 
   @Get(':id')
@@ -109,7 +113,9 @@ export class CompanyController {
     description: 'The record has been successfully retrieved.',
   })
   async findOne(@Param('id') id: string): Promise<CompanyDto> {
-    return await this.companyService.findOne(id);
+    return await this.companyService.findOne(id).catch(() => {
+      throw new NotFoundException(`Company ${id} not found`);
+    });
   }
 
   @Patch(':id')
@@ -123,11 +129,15 @@ export class CompanyController {
     type: CompanyDto,
     description: 'The record has been successfully updated.',
   })
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateCompanyDto: UpdateCompanyDto,
   ): Promise<CompanyDto> {
-    return this.companyService.update(id, updateCompanyDto);
+    const company = this.companyService.findOne(id);
+    if (!company) {
+      throw new NotFoundException(`Company ${id} not found`);
+    }
+    return await this.companyService.update(id, updateCompanyDto);
   }
 
   @Delete(':id')
@@ -141,7 +151,13 @@ export class CompanyController {
   @ApiNoContentResponse({
     description: 'The record has been successfully deleted.',
   })
-  remove(@Param('id') id: string) {
-    return this.companyService.remove(id);
+  async remove(@Param('id') id: string) {
+    try {
+      await this.companyService.findOne(id);
+    } catch (error) {
+      throw new NotFoundException(`Company ${id} not found`);
+    }
+
+    await this.companyService.remove(id);
   }
 }
