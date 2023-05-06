@@ -7,7 +7,7 @@ import {
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { PrismaService } from '@/prisma/prisma.service';
-import { ProjectDto } from './dto';
+import { ProjectDto, ProjectPreviewDto } from './dto';
 import { CompanyService } from '@/company/company.service';
 
 @Injectable()
@@ -29,10 +29,31 @@ export class ProjectService {
    * @param createProjectDto  Data to create a project entity
    * @returns Newly created project entity
    */
-  async create(createProjectDto: CreateProjectDto) {
+  async create(createProjectDto: CreateProjectDto): Promise<ProjectDto> {
     return await this.prisma.project.create({
-      data: createProjectDto,
-      select: this.previewSelector,
+      data: {
+        name: createProjectDto.name,
+        description: createProjectDto.description,
+        company: createProjectDto.company
+          ? {
+              connect: { id: createProjectDto.company },
+            }
+          : undefined,
+        university: createProjectDto.university
+          ? {
+              connect: { id: createProjectDto.university },
+            }
+          : undefined,
+      },
+      select: {
+        ...this.previewSelector,
+        company: {
+          select: this.companyService.previewSelector,
+        },
+        university: {
+          select: this.previewSelector,
+        },
+      },
     });
   }
 
