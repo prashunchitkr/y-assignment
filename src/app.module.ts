@@ -4,7 +4,6 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { CompanyModule } from './company/company.module';
 import { ProjectModule } from './project/project.module';
 import { StudentModule } from './student/student.module';
-import { StudentModule } from './student/student.module';
 
 @Module({
   providers: [
