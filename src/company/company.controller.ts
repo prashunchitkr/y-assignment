@@ -1,3 +1,4 @@
+import { ApiSearchDecorator } from '@/utils/decorators/api-search-query.decorator';
 import { ZodParseBoolPipe, ZodParseIntPipe } from '@/utils/zod';
 import {
   Body,
@@ -44,35 +45,12 @@ export class CompanyController {
 
   @Get()
   @ApiOperation({ summary: 'Get companies with pagination and search' })
-  @ApiQuery({
-    name: 'skip',
-    required: false,
-    type: Number,
-    description: 'Number of records to skip. Default 0',
-  })
-  @ApiQuery({
-    name: 'take',
-    required: false,
-    type: Number,
-    description: 'Number of records to take. Default 10',
-  })
-  @ApiQuery({
-    name: 'name',
-    required: false,
-    type: String,
-    description: 'Search by name',
-  })
-  @ApiQuery({
-    name: 'description',
-    required: false,
-    type: String,
-    description: 'Search by description',
-  })
+  @ApiSearchDecorator()
   @ApiQuery({
     name: 'projects',
     required: false,
     type: Boolean,
-    description: 'Include projects dadta in the result',
+    description: 'Include projects data in the result',
   })
   @ApiOkResponse({
     type: [CompanyPreviewDto],
@@ -144,6 +122,7 @@ export class CompanyController {
   }
 
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Delete company' })
   @ApiParam({
     name: 'id',

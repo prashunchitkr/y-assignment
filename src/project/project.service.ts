@@ -1,22 +1,18 @@
-import { CompanyService } from '@/company/company.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ProjectDto, ProjectPreviewDto } from './dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
 @Injectable()
 export class ProjectService {
-  readonly previewSelector = {
+  readonly #previewSelector = {
     id: true,
     name: true,
     description: true,
   };
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly companyService: CompanyService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Create a project entity. You must provide a university or a company id
@@ -24,11 +20,6 @@ export class ProjectService {
    * @returns Newly created project entity
    */
   async create(createProjectDto: CreateProjectDto): Promise<ProjectDto> {
-    if (!createProjectDto.university && !createProjectDto.company)
-      throw new BadRequestException(
-        'You must provide a university or a company',
-      );
-
     return await this.prisma.project.create({
       data: {
         name: createProjectDto.name,
@@ -45,12 +36,12 @@ export class ProjectService {
           : undefined,
       },
       select: {
-        ...this.previewSelector,
+        ...this.#previewSelector,
         company: {
-          select: this.previewSelector,
+          select: this.#previewSelector,
         },
         university: {
-          select: this.previewSelector,
+          select: this.#previewSelector,
         },
       },
     });
@@ -84,15 +75,15 @@ export class ProjectService {
       skip,
       take,
       select: {
-        ...this.previewSelector,
+        ...this.#previewSelector,
         ...(includeCompany && {
           company: {
-            select: this.previewSelector,
+            select: this.#previewSelector,
           },
         }),
         ...(includeUniversity && {
           university: {
-            select: this.previewSelector,
+            select: this.#previewSelector,
           },
         }),
       },
@@ -108,12 +99,12 @@ export class ProjectService {
     const project = await this.prisma.project.findUnique({
       where: { id },
       select: {
-        ...this.previewSelector,
+        ...this.#previewSelector,
         company: {
-          select: this.previewSelector,
+          select: this.#previewSelector,
         },
         university: {
-          select: this.previewSelector,
+          select: this.#previewSelector,
         },
       },
     });
@@ -148,12 +139,12 @@ export class ProjectService {
         }),
       },
       select: {
-        ...this.previewSelector,
+        ...this.#previewSelector,
         company: {
-          select: this.previewSelector,
+          select: this.#previewSelector,
         },
         university: {
-          select: this.previewSelector,
+          select: this.#previewSelector,
         },
       },
     });

@@ -1,4 +1,5 @@
 import { CompanyService } from '@/company/company.service';
+import { ApiSearchDecorator } from '@/utils/decorators/api-search-query.decorator';
 import { ZodParseBoolPipe, ZodParseIntPipe } from '@/utils/zod';
 import {
   BadRequestException,
@@ -43,36 +44,29 @@ export class ProjectController {
     description: 'The project has been successfully created.',
     type: ProjectDto,
   })
-  create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectService.create(createProjectDto);
+  async create(@Body() createProjectDto: CreateProjectDto) {
+    if (!createProjectDto.university && !createProjectDto.company)
+      throw new BadRequestException(
+        'You must provide a university or a company',
+      );
+
+    if (createProjectDto.company) {
+      const company = await this.companyService.findOne(
+        createProjectDto.company,
+      );
+      if (!company) {
+        throw new BadRequestException('Company does not exist');
+      }
+    }
+
+    // TODO: Check if provided university exists
+
+    return await this.projectService.create(createProjectDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all projects with pagination and search.' })
-  @ApiQuery({
-    name: 'skip',
-    description: 'Number of records to skip',
-    type: Number,
-    required: false,
-  })
-  @ApiQuery({
-    name: 'take',
-    description: 'Number of records to take',
-    type: Number,
-    required: false,
-  })
-  @ApiQuery({
-    name: 'name',
-    required: false,
-    type: String,
-    description: 'Search by name',
-  })
-  @ApiQuery({
-    name: 'description',
-    required: false,
-    type: String,
-    description: 'Search by description',
-  })
+  @ApiSearchDecorator()
   @ApiQuery({
     name: 'company',
     description: 'Include company',
