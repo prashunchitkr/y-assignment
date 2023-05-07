@@ -1,8 +1,8 @@
+import { PrismaService } from '@/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CompanyDto } from './dto/company.dto';
 import { CompanyPreviewDto } from './dto/company-preview.dto';
+import { CompanyDto } from './dto/company.dto';
 
 @Injectable()
 export class CompanyService {

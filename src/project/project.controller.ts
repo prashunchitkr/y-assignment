@@ -44,7 +44,9 @@ export class ProjectController {
     description: 'The project has been successfully created.',
     type: ProjectDto,
   })
-  async create(@Body() createProjectDto: CreateProjectDto) {
+  async create(
+    @Body() createProjectDto: CreateProjectDto,
+  ): Promise<ProjectPreviewDto> {
     if (!createProjectDto.university && !createProjectDto.company)
       throw new BadRequestException(
         'You must provide a university or a company',
@@ -90,7 +92,7 @@ export class ProjectController {
     @Query('university', new ZodParseBoolPipe()) university?: boolean,
     @Query('name') name?: string,
     @Query('description') description?: string,
-  ) {
+  ): Promise<ProjectPreviewDto[]> {
     return this.projectService.findAll(
       skip,
       take,
@@ -116,7 +118,7 @@ export class ProjectController {
   @ApiNotFoundResponse({
     description: 'The record does not exist',
   })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string): Promise<ProjectDto> {
     const project = await this.projectService.findOne(id);
 
     if (!project)
@@ -143,7 +145,7 @@ export class ProjectController {
   async update(
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
-  ) {
+  ): Promise<ProjectDto> {
     if (updateProjectDto.company) {
       const company = await this.companyService.findOne(
         updateProjectDto.company,
