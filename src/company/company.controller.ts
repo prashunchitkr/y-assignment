@@ -113,9 +113,13 @@ export class CompanyController {
     description: 'The record has been successfully retrieved.',
   })
   async findOne(@Param('id') id: string): Promise<CompanyDto> {
-    return await this.companyService.findOne(id).catch(() => {
-      throw new NotFoundException(`Company ${id} not found`);
-    });
+    const company = await this.companyService.findOne(id);
+
+    if (!company) {
+      throw new NotFoundException(`Company with id ${id} not found`);
+    }
+
+    return company;
   }
 
   @Patch(':id')

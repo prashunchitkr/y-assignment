@@ -78,7 +78,7 @@ export class CompanyService {
    * @param id Company id
    * @returns Company and its projects
    */
-  async findOne(id: string): Promise<CompanyDto> {
+  async findOne(id: string): Promise<CompanyDto | null> {
     const company = await this.prisma.company.findUnique({
       where: { id },
       select: {
@@ -88,10 +88,6 @@ export class CompanyService {
         },
       },
     });
-
-    if (!company) {
-      throw new Error(`Company with id ${id} doesn't exist`);
-    }
 
     return company;
   }
