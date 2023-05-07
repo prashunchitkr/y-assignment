@@ -14,6 +14,7 @@ import {
 import {
   ApiCreatedResponse,
   ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -42,7 +43,7 @@ export class CompanyController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get companies' })
+  @ApiOperation({ summary: 'Get companies with pagination and search' })
   @ApiQuery({
     name: 'skip',
     required: false,
@@ -54,6 +55,18 @@ export class CompanyController {
     required: false,
     type: Number,
     description: 'Number of records to take. Default 10',
+  })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    type: String,
+    description: 'Search by name',
+  })
+  @ApiQuery({
+    name: 'description',
+    required: false,
+    type: String,
+    description: 'Search by description',
   })
   @ApiQuery({
     name: 'projects',
@@ -68,36 +81,16 @@ export class CompanyController {
   async findAll(
     @Query('skip', new ZodParseIntPipe({ default: 0 })) skip: number,
     @Query('take', new ZodParseIntPipe({ default: 10 })) take: number,
-    @Query('projects', new ZodParseBoolPipe()) includeProjects?: boolean,
-  ): Promise<CompanyPreviewDto[]> {
-    return await this.companyService.findAll(skip, take, includeProjects);
-  }
-
-  @Get('search')
-  @ApiOperation({ summary: 'Search companies by name' })
-  @ApiQuery({
-    name: 'name',
-    required: false,
-    type: String,
-    description: 'Search by name',
-  })
-  @ApiQuery({
-    name: 'description',
-    required: false,
-    type: String,
-    description: 'Search by description',
-  })
-  @ApiOkResponse({
-    type: [CompanyPreviewDto],
-    description: 'The records has been successfully retrieved.',
-  })
-  async searchByNameAndDescription(
     @Query('name') name?: string,
     @Query('description') description?: string,
-  ) {
-    return await this.companyService.searchByNameAndDescription(
+    @Query('projects', new ZodParseBoolPipe()) includeProjects?: boolean,
+  ): Promise<CompanyPreviewDto[]> {
+    return await this.companyService.findAll(
+      skip,
+      take,
       name,
       description,
+      includeProjects,
     );
   }
 
@@ -111,6 +104,9 @@ export class CompanyController {
   @ApiOkResponse({
     type: CompanyDto,
     description: 'The record has been successfully retrieved.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The record does not exist',
   })
   async findOne(@Param('id') id: string): Promise<CompanyDto> {
     const company = await this.companyService.findOne(id);
@@ -133,6 +129,9 @@ export class CompanyController {
     type: CompanyDto,
     description: 'The record has been successfully updated.',
   })
+  @ApiNotFoundResponse({
+    description: 'The record does not exist',
+  })
   async update(
     @Param('id') id: string,
     @Body() updateCompanyDto: UpdateCompanyDto,
@@ -145,7 +144,6 @@ export class CompanyController {
   }
 
   @Delete(':id')
-  @HttpCode(204)
   @ApiOperation({ summary: 'Delete company' })
   @ApiParam({
     name: 'id',
@@ -155,12 +153,12 @@ export class CompanyController {
   @ApiNoContentResponse({
     description: 'The record has been successfully deleted.',
   })
+  @ApiNotFoundResponse({
+    description: 'The record does not exist',
+  })
   async remove(@Param('id') id: string) {
-    try {
-      await this.companyService.findOne(id);
-    } catch (error) {
-      throw new NotFoundException(`Company ${id} not found`);
-    }
+    const company = await this.companyService.findOne(id);
+    if (!company) throw new NotFoundException(`Company ${id} not found`);
 
     await this.companyService.remove(id);
   }

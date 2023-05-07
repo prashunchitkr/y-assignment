@@ -1,15 +1,30 @@
+import { CompanyService } from '@/company/company.service';
+import { ZodParseBoolPipe, ZodParseIntPipe } from '@/utils/zod';
 import {
   BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
+  HttpCode,
+  NotFoundException,
+  NotImplementedException,
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ProjectDto } from './dto';
+import {
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { ProjectDto, ProjectPreviewDto } from './dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectService } from './project.service';
@@ -17,7 +32,10 @@ import { ProjectService } from './project.service';
 @Controller('project')
 @ApiTags('Project')
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(
+    private readonly projectService: ProjectService,
+    private readonly companyService: CompanyService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a project' })
@@ -25,31 +43,151 @@ export class ProjectController {
     description: 'The project has been successfully created.',
     type: ProjectDto,
   })
-  create(@Body() createProjectDto: CreateProjectDto): Promise<ProjectDto> {
-    if (!createProjectDto.university && !createProjectDto.company)
-      throw new BadRequestException(
-        'You must provide a university or a company',
-      );
+  create(@Body() createProjectDto: CreateProjectDto) {
     return this.projectService.create(createProjectDto);
   }
 
   @Get()
-  findAll() {
-    return this.projectService.findAll();
+  @ApiOperation({ summary: 'Get all projects with pagination and search.' })
+  @ApiQuery({
+    name: 'skip',
+    description: 'Number of records to skip',
+    type: Number,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'take',
+    description: 'Number of records to take',
+    type: Number,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    type: String,
+    description: 'Search by name',
+  })
+  @ApiQuery({
+    name: 'description',
+    required: false,
+    type: String,
+    description: 'Search by description',
+  })
+  @ApiQuery({
+    name: 'company',
+    description: 'Include company',
+    type: Boolean,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'university',
+    description: 'Include university',
+    type: Boolean,
+    required: false,
+  })
+  @ApiOkResponse({
+    description: 'All projects',
+    type: [ProjectPreviewDto],
+  })
+  findAll(
+    @Query('skip', new ZodParseIntPipe({ default: 0 })) skip: number,
+    @Query('take', new ZodParseIntPipe({ default: 10 })) take: number,
+    @Query('company', new ZodParseBoolPipe()) company?: boolean,
+    @Query('university', new ZodParseBoolPipe()) university?: boolean,
+    @Query('name') name?: string,
+    @Query('description') description?: string,
+  ) {
+    return this.projectService.findAll(
+      skip,
+      take,
+      name,
+      description,
+      company,
+      university,
+    );
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.projectService.findOne(id);
+  @ApiOperation({ summary: 'Get a project by id' })
+  @ApiParam({
+    name: 'id',
+    description: 'Project id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    description: 'The project',
+    type: ProjectDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'The record does not exist',
+  })
+  async findOne(@Param('id') id: string) {
+    const project = await this.projectService.findOne(id);
+
+    if (!project)
+      throw new NotFoundException(`Project with id ${id} does not exist`);
+
+    return project;
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-    return this.projectService.update(+id, updateProjectDto);
+  @ApiOperation({ summary: 'Update a project' })
+  @ApiParam({
+    name: 'id',
+    description: 'Project id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    description: 'The project has been successfully updated.',
+    type: ProjectDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'The record does not exist',
+  })
+  async update(
+    @Param('id') id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+  ) {
+    if (updateProjectDto.company) {
+      const company = await this.companyService.findOne(
+        updateProjectDto.company,
+      );
+      if (!company) {
+        throw new BadRequestException(
+          `Company ${updateProjectDto.company} does not exist`,
+        );
+      }
+    }
+
+    // TODO: Check for university
+    if (updateProjectDto.university) {
+      throw new NotImplementedException();
+    }
+
+    return await this.projectService.update(id, updateProjectDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.projectService.remove(+id);
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Delete Project' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Project id',
+  })
+  @ApiNoContentResponse({
+    description: 'The record has been successfully deleted.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The record does not exist',
+  })
+  async remove(@Param('id') id: string) {
+    const project = await this.projectService.findOne(id);
+
+    if (!project) throw new NotFoundException(`Project with ${id} not found`);
+
+    await this.projectService.remove(id);
   }
 }

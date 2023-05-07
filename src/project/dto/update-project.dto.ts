@@ -1,4 +1,6 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateProjectDto } from './create-project.dto';
+import { createZodDto } from 'nestjs-zod';
+import { zCreateProjectDto } from './create-project.dto';
 
-export class UpdateProjectDto extends PartialType(CreateProjectDto) {}
+export const zUpdateProjectDto = zCreateProjectDto.partial();
+
+export class UpdateProjectDto extends createZodDto(zUpdateProjectDto) {}

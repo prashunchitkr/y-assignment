@@ -108,7 +108,13 @@ describe('CompanyService', () => {
       ];
       jest.spyOn(prismaService.company, 'findMany').mockResolvedValue(result);
 
-      const companies = await service.findAll(0, 10, true);
+      const companies = await service.findAll(
+        0,
+        10,
+        undefined,
+        undefined,
+        true,
+      );
 
       expect(companies).toStrictEqual(result);
     });

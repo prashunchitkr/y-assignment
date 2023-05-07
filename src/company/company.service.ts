@@ -30,15 +30,25 @@ export class CompanyService {
    * Get all companies. Optionally include projects and paginate
    * @param skip Number of records to skip
    * @param take Number of records to take
+   * @param name Name to search
+   * @param description Description to search
    * @param includeProjects Include projects in the response
    * @returns List of companies
    */
   async findAll(
     skip?: number,
     take?: number,
-    includeProjects?: boolean,
+    name?: string,
+    description?: string,
+    includeProjects = false,
   ): Promise<CompanyPreviewDto[]> {
     return await this.prisma.company.findMany({
+      where: {
+        AND: [
+          name ? { name: { search: name } } : {},
+          description ? { description: { search: description } } : {},
+        ],
+      },
       skip,
       take,
       select: {
@@ -49,27 +59,6 @@ export class CompanyService {
           },
         }),
       },
-    });
-  }
-
-  /**
-   * Search companies by name or description
-   * @param name Name to search a company entity
-   * @param description Description to search a company entity
-   * @returns List of companies
-   */
-  async searchByNameAndDescription(
-    name?: string,
-    description?: string,
-  ): Promise<CompanyPreviewDto[]> {
-    return await this.prisma.company.findMany({
-      where: {
-        AND: [
-          name ? { name: { search: name } } : {},
-          description ? { description: { search: description } } : {},
-        ],
-      },
-      select: this.previewSelector,
     });
   }
 
