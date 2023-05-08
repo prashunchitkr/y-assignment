@@ -6,7 +6,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  HttpStatus,
   NotFoundException,
   Param,
   Patch,
@@ -93,7 +92,7 @@ export class StudentController {
     type: String,
     description: 'Student id',
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     type: StudentDto,
     description: 'The record has been successfully retrieved',
   })
@@ -128,6 +127,8 @@ export class StudentController {
     if (!(await this.studentService.studentExists(id))) {
       throw new NotFoundException(`Student with id ${id} not found`);
     }
+
+    // Todo: throw error if provided university or professor do not exist
 
     return this.studentService.update(id, updateStudentDto);
   }

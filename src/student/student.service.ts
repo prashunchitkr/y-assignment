@@ -149,9 +149,6 @@ export class StudentService {
    * Delete a student entity
    * @param id Id of the student to delete
    * @returns Deleted student entity
-   * @throws {Prisma.PrismaClientKnownRequestError} If the student does not exist
-   * @throws {Prisma.PrismaClientKnownRequestError} If the student has a relation with a university
-   * @throws {Prisma.PrismaClientKnownRequestError} If the student has a relation with a professor
    */
   async remove(id: string) {
     await this.prisma.student.delete({ where: { id } });

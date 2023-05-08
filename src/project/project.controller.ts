@@ -46,7 +46,7 @@ export class ProjectController {
   })
   async create(
     @Body() createProjectDto: CreateProjectDto,
-  ): Promise<ProjectPreviewDto> {
+  ): Promise<ProjectDto> {
     if (!createProjectDto.university && !createProjectDto.company)
       throw new BadRequestException(
         'You must provide a university or a company',
