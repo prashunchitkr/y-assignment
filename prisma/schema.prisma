@@ -10,14 +10,14 @@ datasource db {
 
 model Company {
   id          String    @id @default(uuid())
-  name        String
+  name        String    @db.VarChar(255)
   description String
   projects    Project[]
 }
 
 model University {
   id          String      @id @default(uuid())
-  name        String
+  name        String      @db.VarChar(255)
   description String
   projects    Project[]
   students    Student[]
@@ -26,7 +26,7 @@ model University {
 
 model Professor {
   id           String      @id @default(uuid())
-  name         String
+  name         String      @db.VarChar(255)
   description  String
   students     Student[]
   universityId String?
@@ -35,7 +35,7 @@ model Professor {
 
 model Student {
   id           String      @id @default(uuid())
-  name         String
+  name         String      @db.VarChar(255)
   description  String
   professorId  String?
   professor    Professor?  @relation(fields: [professorId], references: [id], onDelete: SetNull)
@@ -45,7 +45,7 @@ model Student {
 
 model Project {
   id           String      @id @default(uuid())
-  name         String
+  name         String      @db.VarChar(255)
   description  String
   universityId String?
   university   University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
