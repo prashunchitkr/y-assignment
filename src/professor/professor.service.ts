@@ -1,5 +1,14 @@
 import { PrismaService } from '@/prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { IStudentService } from '@/student/student.service.abstract';
+import { UniversityModule } from '@/university/university.module';
+import { IUniversityService } from '@/university/university.service.abstract';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CreateProfessorDto,
   ProfessorDto,
@@ -16,7 +25,12 @@ export class ProfessorService implements IProfessorService {
     description: true,
   };
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => IUniversityService))
+    private readonly universityService: IUniversityService,
+    private readonly studentService: IStudentService,
+  ) {}
 
   /**
    * Create a professor entity. You must provide a university id
@@ -24,6 +38,14 @@ export class ProfessorService implements IProfessorService {
    * @returns Newly created professor entity
    */
   async create(createProfessorDto: CreateProfessorDto): Promise<ProfessorDto> {
+    const university = await this.universityService.findOne(
+      createProfessorDto.university,
+    );
+
+    if (!university) {
+      throw new NotFoundException('University not found');
+    }
+
     return await this.prisma.professor.create({
       data: {
         ...createProfessorDto,
@@ -115,6 +137,24 @@ export class ProfessorService implements IProfessorService {
     id: string,
     updateProfessorDto: UpdateProfessorDto,
   ): Promise<ProfessorDto> {
+    const professor = await this.prisma.professor.findUnique({
+      where: { id },
+    });
+
+    if (!professor) {
+      throw new NotFoundException('Professor not found');
+    }
+
+    if (updateProfessorDto.university) {
+      const university = await this.universityService.findOne(
+        updateProfessorDto.university,
+      );
+
+      if (!university) {
+        throw new NotFoundException('University not found');
+      }
+    }
+
     return await this.prisma.professor.update({
       where: { id },
       data: {
@@ -139,6 +179,18 @@ export class ProfessorService implements IProfessorService {
   }
 
   async remove(id: string) {
+    const professor = await this.findOne(id);
+
+    if (!professor) {
+      throw new NotFoundException(`Professor with id ${id} not found`);
+    }
+
+    const students = await this.studentService.getProfessorStudents(id);
+
+    if (students.length > 0) {
+      throw new BadRequestException('Cannot delete professor with students');
+    }
+
     await this.prisma.professor.delete({
       where: { id },
     });

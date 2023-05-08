@@ -1,4 +1,3 @@
-import { ICompanyService } from '@/company/company.service.abstract';
 import { ApiSearchDecorator } from '@/utils/decorators/api-search-query.decorator';
 import { ZodParseBoolPipe, ZodParseIntPipe } from '@/utils/zod';
 import {
@@ -9,7 +8,6 @@ import {
   Get,
   HttpCode,
   NotFoundException,
-  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -33,10 +31,7 @@ import { IProjectService } from './project.service.abstract';
 @Controller('project')
 @ApiTags('Project')
 export class ProjectController {
-  constructor(
-    private readonly projectService: IProjectService,
-    private readonly companyService: ICompanyService,
-  ) {}
+  constructor(private readonly projectService: IProjectService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a project' })
@@ -51,18 +46,6 @@ export class ProjectController {
       throw new BadRequestException(
         'You must provide a university or a company',
       );
-
-    if (createProjectDto.company) {
-      const company = await this.companyService.findOne(
-        createProjectDto.company,
-      );
-      if (!company) {
-        throw new BadRequestException('Company does not exist');
-      }
-    }
-
-    // TODO: Check if provided university exists
-
     return await this.projectService.create(createProjectDto);
   }
 
@@ -121,8 +104,9 @@ export class ProjectController {
   async findOne(@Param('id') id: string): Promise<ProjectDto> {
     const project = await this.projectService.findOne(id);
 
-    if (!project)
-      throw new NotFoundException(`Project with id ${id} does not exist`);
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
 
     return project;
   }
@@ -146,22 +130,6 @@ export class ProjectController {
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectDto> {
-    if (updateProjectDto.company) {
-      const company = await this.companyService.findOne(
-        updateProjectDto.company,
-      );
-      if (!company) {
-        throw new BadRequestException(
-          `Company ${updateProjectDto.company} does not exist`,
-        );
-      }
-    }
-
-    // TODO: Check for university
-    if (updateProjectDto.university) {
-      throw new NotImplementedException();
-    }
-
     return await this.projectService.update(id, updateProjectDto);
   }
 
@@ -180,10 +148,6 @@ export class ProjectController {
     description: 'The record does not exist',
   })
   async remove(@Param('id') id: string) {
-    const project = await this.projectService.findOne(id);
-
-    if (!project) throw new NotFoundException(`Project with ${id} not found`);
-
     await this.projectService.remove(id);
   }
 }

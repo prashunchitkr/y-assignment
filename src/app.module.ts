@@ -5,6 +5,7 @@ import { CompanyModule } from './company/company.module';
 import { ProfessorModule } from './professor/professor.module';
 import { ProjectModule } from './project/project.module';
 import { StudentModule } from './student/student.module';
+import { UniversityModule } from './university/university.module';
 
 @Module({
   providers: [
@@ -14,6 +15,12 @@ import { StudentModule } from './student/student.module';
     },
     { provide: APP_INTERCEPTOR, useClass: ZodSerializerInterceptor },
   ],
-  imports: [CompanyModule, ProjectModule, StudentModule, ProfessorModule],
+  imports: [
+    CompanyModule,
+    ProjectModule,
+    StudentModule,
+    ProfessorModule,
+    UniversityModule,
+  ],
 })
 export class AppModule {}

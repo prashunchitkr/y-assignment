@@ -1,5 +1,6 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { StudentModule } from '@/student/student.module';
+import { UniversityModule } from '@/university/university.module';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProfessorController } from './professor.controller';
 import { ProfessorService } from './professor.service';
@@ -19,7 +20,7 @@ describe('ProfessorController', () => {
         },
         PrismaService,
       ],
-      imports: [StudentModule],
+      imports: [StudentModule, UniversityModule],
     }).compile();
 
     controller = module.get<ProfessorController>(ProfessorController);

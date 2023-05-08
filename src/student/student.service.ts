@@ -1,5 +1,7 @@
 import { PrismaService } from '@/prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { IProfessorService } from '@/professor/professor.service.abstract';
+import { IUniversityService } from '@/university/university.service.abstract';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   CreateStudentDto,
   StudentDto,
@@ -16,7 +18,11 @@ export class StudentService implements IStudentService {
     description: true,
   };
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly universityService: IUniversityService,
+    private readonly professorService: IProfessorService,
+  ) {}
 
   /**
    * Create a student entity. You must provide a university and a professor id
@@ -24,15 +30,31 @@ export class StudentService implements IStudentService {
    * @returns Newly created student entity
    */
   async create(createStudentDto: CreateStudentDto) {
+    const university = await this.universityService.findOne(
+      createStudentDto.university,
+    );
+
+    if (!university) {
+      throw new NotFoundException('University not found');
+    }
+
+    const professor = await this.professorService.findOne(
+      createStudentDto.professor,
+    );
+
+    if (!professor) {
+      throw new NotFoundException('Professor not found');
+    }
+
     return await this.prisma.student.create({
       data: {
         name: createStudentDto.name,
         description: createStudentDto.description,
         university: {
-          connect: { id: createStudentDto.university },
+          connect: university,
         },
         professor: {
-          connect: { id: createStudentDto.professor },
+          connect: professor,
         },
       },
       select: {
@@ -112,6 +134,32 @@ export class StudentService implements IStudentService {
     id: string,
     updateStudentDto: UpdateStudentDto,
   ): Promise<StudentDto> {
+    const student = await this.findOne(id);
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    if (updateStudentDto.university) {
+      const university = await this.universityService.findOne(
+        updateStudentDto.university,
+      );
+
+      if (!university) {
+        throw new NotFoundException('University not found');
+      }
+    }
+
+    if (updateStudentDto.professor) {
+      const professor = await this.professorService.findOne(
+        updateStudentDto.professor,
+      );
+
+      if (!professor) {
+        throw new NotFoundException('Professor not found');
+      }
+    }
+
     return await this.prisma.student.update({
       where: { id },
       data: {
@@ -146,17 +194,13 @@ export class StudentService implements IStudentService {
    * @returns Deleted student entity
    */
   async remove(id: string) {
-    await this.prisma.student.delete({ where: { id } });
-  }
+    const student = await this.findOne(id);
 
-  /**
-   * Check if a student record exists for the given id
-   * @param id Id of the student to check
-   * @returns True if the student exists, false otherwise
-   */
-  async studentExists(id: string): Promise<boolean> {
-    const student = await this.prisma.student.findUnique({ where: { id } });
-    return !!student;
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    await this.prisma.student.delete({ where: { id } });
   }
 
   async getProfessorStudents(

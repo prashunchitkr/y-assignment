@@ -1,5 +1,10 @@
+import { ICompanyService } from '@/company/company.service.abstract';
 import { PrismaService } from '@/prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CreateProjectDto,
   ProjectDto,
@@ -16,7 +21,10 @@ export class ProjectService implements IProjectService {
     description: true,
   };
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly companyService: ICompanyService,
+  ) {}
 
   /**
    * Create a project entity. You must provide a university or a company id
@@ -24,6 +32,25 @@ export class ProjectService implements IProjectService {
    * @returns Newly created project entity
    */
   async create(createProjectDto: CreateProjectDto): Promise<ProjectDto> {
+    if (createProjectDto.company) {
+      const company = await this.companyService.findOne(
+        createProjectDto.company,
+      );
+      if (!company) {
+        throw new BadRequestException('Company does not exist');
+      }
+    }
+
+    // TODO: Check if provided university exists
+    if (createProjectDto.company) {
+      const company = await this.companyService.findOne(
+        createProjectDto.company,
+      );
+      if (!company) {
+        throw new BadRequestException('Company does not exist');
+      }
+    }
+
     return await this.prisma.project.create({
       data: {
         name: createProjectDto.name,
@@ -121,6 +148,29 @@ export class ProjectService implements IProjectService {
     id: string,
     updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectDto> {
+    if (updateProjectDto.company) {
+      const company = await this.companyService.findOne(
+        updateProjectDto.company,
+      );
+      if (!company) {
+        throw new BadRequestException(
+          `Company ${updateProjectDto.company} does not exist`,
+        );
+      }
+    }
+
+    // TODO: Check for university
+    if (updateProjectDto.university) {
+      const university = await this.companyService.findOne(
+        updateProjectDto.university,
+      );
+      if (!university) {
+        throw new BadRequestException(
+          `University ${updateProjectDto.university} does not exist`,
+        );
+      }
+    }
+
     return await this.prisma.project.update({
       where: { id },
       data: {
@@ -154,6 +204,10 @@ export class ProjectService implements IProjectService {
    * @param id Id of project to delete
    */
   async remove(id: string) {
+    const project = await this.findOne(id);
+
+    if (!project) throw new NotFoundException(`Project with ${id} not found`);
+
     await this.prisma.project.delete({
       where: { id },
     });

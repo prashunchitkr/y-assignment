@@ -44,7 +44,6 @@ export class StudentController {
   async create(
     @Body() createStudentDto: CreateStudentDto,
   ): Promise<StudentPreviewDto> {
-    // TODO: throw error if provided university and professor do not exist
     return await this.studentService.create(createStudentDto);
   }
 
@@ -124,12 +123,6 @@ export class StudentController {
     @Param('id') id: string,
     @Body() updateStudentDto: UpdateStudentDto,
   ): Promise<StudentDto> {
-    if (!(await this.studentService.studentExists(id))) {
-      throw new NotFoundException(`Student with id ${id} not found`);
-    }
-
-    // Todo: throw error if provided university or professor do not exist
-
     return this.studentService.update(id, updateStudentDto);
   }
 
@@ -145,10 +138,6 @@ export class StudentController {
     description: 'The record has been successfully deleted',
   })
   async remove(@Param('id') id: string) {
-    if (!(await this.studentService.studentExists(id))) {
-      throw new NotFoundException(`Student with id ${id} not found`);
-    }
-
     await this.studentService.remove(id);
   }
 }

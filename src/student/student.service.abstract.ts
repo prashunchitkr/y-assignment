@@ -30,8 +30,6 @@ export abstract class IStudentService {
 
   abstract remove(id: string): Promise<void>;
 
-  abstract studentExists(id: string): Promise<boolean>;
-
   abstract getProfessorStudents(
     professorId: string,
   ): Promise<StudentPreviewDto[]>;
