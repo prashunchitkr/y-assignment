@@ -1,9 +1,12 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { ProjectDto, ProjectPreviewDto } from './dto';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { IProjectService } from './project.service.abstract';
+import {
+  CreateProjectDto,
+  ProjectDto,
+  ProjectPreviewDto,
+  UpdateProjectDto,
+} from './dto';
+import { IFindAllQuery, IProjectService } from './project.service.abstract';
 
 @Injectable()
 export class ProjectService implements IProjectService {
@@ -60,7 +63,7 @@ export class ProjectService implements IProjectService {
     description,
     includeCompany = false,
     includeUniversity = false,
-  }): Promise<ProjectPreviewDto[]> {
+  }: IFindAllQuery): Promise<ProjectPreviewDto[]> {
     return await this.prisma.project.findMany({
       where: {
         AND: [

@@ -1,9 +1,12 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { ICompanyService } from './company.service.abstract';
-import { CreateCompanyDto, UpdateCompanyDto } from './dto';
-import { CompanyPreviewDto } from './dto/company-preview.dto';
-import { CompanyDto } from './dto/company.dto';
+import { ICompanyService, IFindAllQuery } from './company.service.abstract';
+import {
+  CompanyDto,
+  CompanyPreviewDto,
+  CreateCompanyDto,
+  UpdateCompanyDto,
+} from './dto';
 
 @Injectable()
 export class CompanyService implements ICompanyService {
@@ -38,7 +41,7 @@ export class CompanyService implements ICompanyService {
     name,
     description,
     includeProjects = false,
-  }): Promise<CompanyPreviewDto[]> {
+  }: IFindAllQuery): Promise<CompanyPreviewDto[]> {
     return await this.prisma.company.findMany({
       where: {
         AND: [

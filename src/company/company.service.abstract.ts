@@ -5,7 +5,7 @@ import {
   UpdateCompanyDto,
 } from './dto';
 
-interface IFindAllQuery {
+export interface IFindAllQuery {
   skip?: number;
   take?: number;
   name?: string;

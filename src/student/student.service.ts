@@ -1,18 +1,12 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { StudentDto, StudentPreviewDto } from './dto';
-import { CreateStudentDto } from './dto/create-student.dto';
-import { UpdateStudentDto } from './dto/update-student.dto';
-import { IStudentService } from './student.service.abstract';
-
-interface IFindAllQuery {
-  skip?: number;
-  take?: number;
-  name?: string;
-  description?: string;
-  includeUniversity?: boolean;
-  includeProfessor?: boolean;
-}
+import {
+  CreateStudentDto,
+  StudentDto,
+  StudentPreviewDto,
+  UpdateStudentDto,
+} from './dto';
+import { IFindAllQuery, IStudentService } from './student.service.abstract';
 
 @Injectable()
 export class StudentService implements IStudentService {

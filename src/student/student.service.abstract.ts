@@ -5,7 +5,7 @@ import {
   UpdateStudentDto,
 } from './dto';
 
-interface IFindAllQuery {
+export interface IFindAllQuery {
   skip?: number;
   take?: number;
   name?: string;

@@ -6,16 +6,7 @@ import {
   ProfessorPreviewDto,
   UpdateProfessorDto,
 } from './dto';
-import { IProfessorService } from './professor.service.abstract';
-
-interface IFindAllQuery {
-  skip?: number;
-  take?: number;
-  name?: string;
-  description?: string;
-  includeUniversity?: boolean;
-  includeStudents?: boolean;
-}
+import { IFindAllQuery, IProfessorService } from './professor.service.abstract';
 
 @Injectable()
 export class ProfessorService implements IProfessorService {
