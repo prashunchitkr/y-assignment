@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CompanyController } from './company.controller';
 import { CompanyService } from './company.service';
+import { ICompanyService } from './company.service.abstract';
 
 jest.mock('@/prisma/prisma.service', () => ({
   PrismaService: jest.fn().mockImplementation(() => ({
@@ -19,7 +20,13 @@ describe('CompanyController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CompanyController],
-      providers: [CompanyService, PrismaService],
+      providers: [
+        {
+          provide: ICompanyService,
+          useClass: CompanyService,
+        },
+        PrismaService,
+      ],
     }).compile();
 
     controller = module.get<CompanyController>(CompanyController);

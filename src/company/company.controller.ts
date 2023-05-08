@@ -22,14 +22,14 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { CompanyService } from './company.service';
+import { ICompanyService } from './company.service.abstract';
 import { CompanyPreviewDto, CreateCompanyDto, UpdateCompanyDto } from './dto';
 import { CompanyDto } from './dto/company.dto';
 
 @Controller('company')
 @ApiTags('Company')
 export class CompanyController {
-  constructor(private readonly companyService: CompanyService) {}
+  constructor(private readonly companyService: ICompanyService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create company' })
@@ -63,13 +63,13 @@ export class CompanyController {
     @Query('description') description?: string,
     @Query('projects', new ZodParseBoolPipe()) includeProjects?: boolean,
   ): Promise<CompanyPreviewDto[]> {
-    return await this.companyService.findAll(
+    return await this.companyService.findAll({
       skip,
       take,
       name,
       description,
       includeProjects,
-    );
+    });
   }
 
   @Get(':id')

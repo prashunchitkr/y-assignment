@@ -1,11 +1,12 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
+import { ICompanyService } from './company.service.abstract';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto';
 import { CompanyPreviewDto } from './dto/company-preview.dto';
 import { CompanyDto } from './dto/company.dto';
 
 @Injectable()
-export class CompanyService {
+export class CompanyService implements ICompanyService {
   readonly previewSelector = {
     id: true,
     name: true,
@@ -28,20 +29,16 @@ export class CompanyService {
 
   /**
    * Get all companies. Optionally include projects and paginate
-   * @param skip Number of records to skip
-   * @param take Number of records to take
-   * @param name Name to search
-   * @param description Description to search
-   * @param includeProjects Include projects in the response
+   * @param querty Query parameters
    * @returns List of companies
    */
-  async findAll(
-    skip?: number,
-    take?: number,
-    name?: string,
-    description?: string,
+  async findAll({
+    skip,
+    take,
+    name,
+    description,
     includeProjects = false,
-  ): Promise<CompanyPreviewDto[]> {
+  }): Promise<CompanyPreviewDto[]> {
     return await this.prisma.company.findMany({
       where: {
         AND: [

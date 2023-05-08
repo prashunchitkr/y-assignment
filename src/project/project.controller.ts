@@ -1,4 +1,4 @@
-import { CompanyService } from '@/company/company.service';
+import { ICompanyService } from '@/company/company.service.abstract';
 import { ApiSearchDecorator } from '@/utils/decorators/api-search-query.decorator';
 import { ZodParseBoolPipe, ZodParseIntPipe } from '@/utils/zod';
 import {
@@ -28,14 +28,14 @@ import {
 import { ProjectDto, ProjectPreviewDto } from './dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { ProjectService } from './project.service';
+import { IProjectService } from './project.service.abstract';
 
 @Controller('project')
 @ApiTags('Project')
 export class ProjectController {
   constructor(
-    private readonly projectService: ProjectService,
-    private readonly companyService: CompanyService,
+    private readonly projectService: IProjectService,
+    private readonly companyService: ICompanyService,
   ) {}
 
   @Post()
@@ -93,14 +93,14 @@ export class ProjectController {
     @Query('name') name?: string,
     @Query('description') description?: string,
   ): Promise<ProjectPreviewDto[]> {
-    return this.projectService.findAll(
+    return this.projectService.findAll({
       skip,
       take,
       name,
       description,
-      company,
-      university,
-    );
+      includeCompany: company,
+      includeUniversity: university,
+    });
   }
 
   @Get(':id')

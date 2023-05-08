@@ -1,3 +1,4 @@
+import { IStudentService } from '@/student/student.service.abstract';
 import { ApiSearchDecorator } from '@/utils/decorators/api-search-query.decorator';
 import { ZodParseBoolPipe, ZodParseIntPipe } from '@/utils/zod';
 import {
@@ -27,12 +28,15 @@ import {
   UpdateProfessorDto,
   ProfessorPreviewDto,
 } from './dto';
-import { ProfessorService } from './professor.service';
+import { IProfessorService } from './professor.service.abstract';
 
 @Controller('professor')
 @ApiTags('Professor')
 export class ProfessorController {
-  constructor(private readonly professorService: ProfessorService) {}
+  constructor(
+    private readonly professorService: IProfessorService,
+    private readonly studentService: IStudentService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a professor' })
@@ -133,7 +137,7 @@ export class ProfessorController {
       throw new NotFoundException(`Professor with id ${id} not found`);
     }
 
-    const students = await this.professorService.getStudents(id);
+    const students = await this.studentService.getProfessorStudents(id);
 
     if (students.length > 0) {
       throw new BadRequestException('Cannot delete professor with students');

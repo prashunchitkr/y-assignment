@@ -28,12 +28,12 @@ import {
   StudentPreviewDto,
   UpdateStudentDto,
 } from './dto';
-import { StudentService } from './student.service';
+import { IStudentService } from './student.service.abstract';
 
 @Controller('student')
 @ApiTags('Student')
 export class StudentController {
-  constructor(private readonly studentService: StudentService) {}
+  constructor(private readonly studentService: IStudentService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create student' })

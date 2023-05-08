@@ -3,9 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { ProjectDto, ProjectPreviewDto } from './dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { IProjectService } from './project.service.abstract';
 
 @Injectable()
-export class ProjectService {
+export class ProjectService implements IProjectService {
   readonly #previewSelector = {
     id: true,
     name: true,
@@ -49,22 +50,17 @@ export class ProjectService {
 
   /**
    * Get all projects. Optionally include company and university and paginate
-   * @param skip  Number of records to skip
-   * @param take  Number of records to take
-   * @param name  Search by name
-   * @param description  Search by description
-   * @param includeCompany  Include company in the response
-   * @param includeUniversity Include university in the response
+   * @param query Query parameters
    * @returns
    */
-  async findAll(
-    skip?: number,
-    take?: number,
-    name?: string,
-    description?: string,
+  async findAll({
+    skip,
+    take,
+    name,
+    description,
     includeCompany = false,
     includeUniversity = false,
-  ): Promise<ProjectPreviewDto[]> {
+  }): Promise<ProjectPreviewDto[]> {
     return await this.prisma.project.findMany({
       where: {
         AND: [

@@ -80,7 +80,13 @@ describe('CompanyService', () => {
 
       jest.spyOn(prismaService.company, 'findMany').mockResolvedValue(result);
 
-      const companies = await service.findAll();
+      const companies = await service.findAll({
+        skip: 0,
+        take: 10,
+        name: undefined,
+        description: undefined,
+        includeProjects: false,
+      });
 
       expect(companies).toStrictEqual(result);
     });
@@ -108,13 +114,13 @@ describe('CompanyService', () => {
       ];
       jest.spyOn(prismaService.company, 'findMany').mockResolvedValue(result);
 
-      const companies = await service.findAll(
-        0,
-        10,
-        undefined,
-        undefined,
-        true,
-      );
+      const companies = await service.findAll({
+        skip: 0,
+        take: 10,
+        name: undefined,
+        description: undefined,
+        includeProjects: true,
+      });
 
       expect(companies).toStrictEqual(result);
     });

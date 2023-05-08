@@ -1,8 +1,9 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { StudentDto } from './dto';
+import { StudentDto, StudentPreviewDto } from './dto';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
+import { IStudentService } from './student.service.abstract';
 
 interface IFindAllQuery {
   skip?: number;
@@ -14,7 +15,7 @@ interface IFindAllQuery {
 }
 
 @Injectable()
-export class StudentService {
+export class StudentService implements IStudentService {
   readonly #previewSelector = {
     id: true,
     name: true,
@@ -162,5 +163,21 @@ export class StudentService {
   async studentExists(id: string): Promise<boolean> {
     const student = await this.prisma.student.findUnique({ where: { id } });
     return !!student;
+  }
+
+  async getProfessorStudents(
+    professorId: string,
+  ): Promise<StudentPreviewDto[]> {
+    return await this.prisma.student.findMany({
+      where: { professorId },
+      select: this.#previewSelector,
+    });
+  }
+
+  async findManyByIds(ids: string[]): Promise<StudentPreviewDto[]> {
+    return await this.prisma.student.findMany({
+      where: { id: { in: ids } },
+      select: this.#previewSelector,
+    });
   }
 }

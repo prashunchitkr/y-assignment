@@ -6,6 +6,7 @@ import {
   ProfessorPreviewDto,
   UpdateProfessorDto,
 } from './dto';
+import { IProfessorService } from './professor.service.abstract';
 
 interface IFindAllQuery {
   skip?: number;
@@ -17,7 +18,7 @@ interface IFindAllQuery {
 }
 
 @Injectable()
-export class ProfessorService {
+export class ProfessorService implements IProfessorService {
   readonly #previewSelector = {
     id: true,
     name: true,
@@ -147,25 +148,19 @@ export class ProfessorService {
   }
 
   async remove(id: string) {
-    return await this.prisma.professor.delete({
+    await this.prisma.professor.delete({
       where: { id },
     });
   }
 
-  async getStudents(id: string) {
-    const result = await this.prisma.professor.findUnique({
-      where: { id },
-      select: {
-        students: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-          },
+  async findManyByIds(ids: string[]): Promise<ProfessorPreviewDto[]> {
+    return await this.prisma.professor.findMany({
+      where: {
+        id: {
+          in: ids,
         },
       },
+      select: this.#previewSelector,
     });
-
-    return result?.students ?? [];
   }
 }
