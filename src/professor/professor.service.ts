@@ -28,8 +28,6 @@ export class ProfessorService implements IProfessorService {
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => IUniversityService))
     private readonly universityService: IUniversityService,
-    @Inject(forwardRef(() => IStudentService))
-    private readonly studentService: IStudentService,
   ) {}
 
   /**
@@ -176,12 +174,6 @@ export class ProfessorService implements IProfessorService {
 
     if (!professor) {
       throw new NotFoundException(`Professor with id ${id} not found`);
-    }
-
-    const students = await this.studentService.getProfessorStudents(id);
-
-    if (students.length > 0) {
-      throw new BadRequestException('Cannot delete professor with students');
     }
 
     await this.prisma.professor.delete({

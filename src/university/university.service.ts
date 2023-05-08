@@ -29,6 +29,7 @@ export class UniversityService implements IUniversityService {
 
   constructor(
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => IStudentService))
     private readonly studentService: IStudentService,
     @Inject(forwardRef(() => IProfessorService))
     private readonly professorService: IProfessorService,

@@ -1,5 +1,6 @@
 import { ICompanyService } from '@/company/company.service.abstract';
 import { PrismaService } from '@/prisma/prisma.service';
+import { IUniversityService } from '@/university/university.service.abstract';
 import {
   BadRequestException,
   Injectable,
@@ -24,6 +25,7 @@ export class ProjectService implements IProjectService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly companyService: ICompanyService,
+    private readonly universityService: IUniversityService,
   ) {}
 
   /**
@@ -41,7 +43,16 @@ export class ProjectService implements IProjectService {
       }
     }
 
-    // TODO: Check if provided university exists
+    if (createProjectDto.university) {
+      const university = await this.universityService.findOne(
+        createProjectDto.university,
+      );
+
+      if (!university) {
+        throw new BadRequestException('University does not exist');
+      }
+    }
+
     if (createProjectDto.company) {
       const company = await this.companyService.findOne(
         createProjectDto.company,
@@ -159,7 +170,17 @@ export class ProjectService implements IProjectService {
       }
     }
 
-    // TODO: Check for university
+    if (updateProjectDto.university) {
+      const university = await this.universityService.findOne(
+        updateProjectDto.university,
+      );
+      if (!university) {
+        throw new BadRequestException(
+          `University ${updateProjectDto.university} does not exist`,
+        );
+      }
+    }
+
     if (updateProjectDto.university) {
       const university = await this.companyService.findOne(
         updateProjectDto.university,

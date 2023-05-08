@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { ProjectController } from './project.controller';
 import { PrismaModule } from '@/prisma/prisma.module';
@@ -15,6 +15,6 @@ import { UniversityModule } from '@/university/university.module';
     },
   ],
   exports: [IProjectService],
-  imports: [PrismaModule, CompanyModule, forwardRef(() => UniversityModule)],
+  imports: [PrismaModule, CompanyModule, UniversityModule],
 })
 export class ProjectModule {}
