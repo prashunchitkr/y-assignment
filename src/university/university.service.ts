@@ -2,6 +2,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { IProfessorService } from '@/professor/professor.service.abstract';
 import { IStudentService } from '@/student/student.service.abstract';
 import {
+  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
@@ -20,7 +21,7 @@ import {
 
 @Injectable()
 export class UniversityService implements IUniversityService {
-  readonly #previewSelector = {
+  readonly previewSelector = {
     id: true,
     name: true,
     description: true,
@@ -40,9 +41,17 @@ export class UniversityService implements IUniversityService {
       createUniversityDto.students,
     );
 
+    if (students.length !== createUniversityDto.students.length) {
+      throw new BadRequestException('One or more students were not found');
+    }
+
     const professors = await this.professorService.findManyByIds(
       createUniversityDto.professors,
     );
+
+    if (professors.length !== createUniversityDto.professors.length) {
+      throw new BadRequestException('One or more professors were not found');
+    }
 
     return await this.prisma.university.create({
       data: {
@@ -54,7 +63,7 @@ export class UniversityService implements IUniversityService {
           connect: professors.map((professor) => ({ id: professor.id })),
         },
       },
-      select: this.#previewSelector,
+      select: this.previewSelector,
     });
   }
 
@@ -76,15 +85,15 @@ export class UniversityService implements IUniversityService {
         ],
       },
       select: {
-        ...this.#previewSelector,
+        ...this.previewSelector,
         ...(includeStudents && {
           students: {
-            select: this.#previewSelector,
+            select: this.previewSelector,
           },
         }),
         ...(includeProfessors && {
           professors: {
-            select: this.#previewSelector,
+            select: this.previewSelector,
           },
         }),
       },
@@ -95,12 +104,12 @@ export class UniversityService implements IUniversityService {
     const university = await this.prisma.university.findUnique({
       where: { id },
       select: {
-        ...this.#previewSelector,
+        ...this.previewSelector,
         students: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
         professors: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
       },
     });
@@ -125,12 +134,12 @@ export class UniversityService implements IUniversityService {
         description: updateUniversityDto.description,
       },
       select: {
-        ...this.#previewSelector,
+        ...this.previewSelector,
         students: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
         professors: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
       },
     });

@@ -18,7 +18,7 @@ import { IFindAllQuery, IProfessorService } from './professor.service.abstract';
 
 @Injectable()
 export class ProfessorService implements IProfessorService {
-  readonly #previewSelector = {
+  readonly previewSelector = {
     id: true,
     name: true,
     description: true,
@@ -28,6 +28,7 @@ export class ProfessorService implements IProfessorService {
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => IUniversityService))
     private readonly universityService: IUniversityService,
+    @Inject(forwardRef(() => IStudentService))
     private readonly studentService: IStudentService,
   ) {}
 
@@ -36,33 +37,12 @@ export class ProfessorService implements IProfessorService {
    * @param createProfessorDto Data to create a professor entity
    * @returns Newly created professor entity
    */
-  async create(createProfessorDto: CreateProfessorDto): Promise<ProfessorDto> {
-    const university = await this.universityService.findOne(
-      createProfessorDto.university,
-    );
-
-    if (!university) {
-      throw new NotFoundException('University not found');
-    }
-
+  async create(
+    createProfessorDto: CreateProfessorDto,
+  ): Promise<ProfessorPreviewDto> {
     return await this.prisma.professor.create({
-      data: {
-        ...createProfessorDto,
-        university: {
-          connect: {
-            id: createProfessorDto.university,
-          },
-        },
-      },
-      select: {
-        ...this.#previewSelector,
-        university: {
-          select: this.#previewSelector,
-        },
-        students: {
-          select: this.#previewSelector,
-        },
-      },
+      data: createProfessorDto,
+      select: this.previewSelector,
     });
   }
 
@@ -89,15 +69,15 @@ export class ProfessorService implements IProfessorService {
         ],
       },
       select: {
-        ...this.#previewSelector,
+        ...this.previewSelector,
         ...(includeUniversity && {
           university: {
-            select: this.#previewSelector,
+            select: this.previewSelector,
           },
         }),
         ...(includeStudents && {
           students: {
-            select: this.#previewSelector,
+            select: this.previewSelector,
           },
         }),
       },
@@ -113,12 +93,12 @@ export class ProfessorService implements IProfessorService {
     const professor = await this.prisma.professor.findUnique({
       where: { id },
       select: {
-        ...this.#previewSelector,
+        ...this.previewSelector,
         university: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
         students: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
       },
     });
@@ -128,6 +108,7 @@ export class ProfessorService implements IProfessorService {
 
   /**
    * Update a professor entity
+   * Students will de disassociated from the professor if the professor is moved to another university
    * @param id Id of the professor to update
    * @param updateProfessorDto Data to update the professor entity
    * @returns Updated professor entity
@@ -136,9 +117,7 @@ export class ProfessorService implements IProfessorService {
     id: string,
     updateProfessorDto: UpdateProfessorDto,
   ): Promise<ProfessorDto> {
-    const professor = await this.prisma.professor.findUnique({
-      where: { id },
-    });
+    const professor = await this.findOne(id);
 
     if (!professor) {
       throw new NotFoundException('Professor not found');
@@ -152,6 +131,16 @@ export class ProfessorService implements IProfessorService {
       if (!university) {
         throw new NotFoundException('University not found');
       }
+
+      const oldUniversity = await this.universityService.findOne(
+        professor.university?.id ?? '',
+      );
+
+      if (oldUniversity && oldUniversity.professors.length === 1) {
+        throw new BadRequestException(
+          'Cannot remove the last professor from a university',
+        );
+      }
     }
 
     return await this.prisma.professor.update({
@@ -163,15 +152,20 @@ export class ProfessorService implements IProfessorService {
           university: {
             connect: { id: updateProfessorDto.university },
           },
+          students: {
+            disconnect: professor.students.map((student) => ({
+              id: student.id,
+            })),
+          },
         }),
       },
       select: {
-        ...this.#previewSelector,
+        ...this.previewSelector,
         university: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
         students: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
       },
     });
@@ -202,7 +196,7 @@ export class ProfessorService implements IProfessorService {
           in: ids,
         },
       },
-      select: this.#previewSelector,
+      select: this.previewSelector,
     });
   }
 }

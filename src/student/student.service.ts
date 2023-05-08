@@ -1,7 +1,11 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { IProfessorService } from '@/professor/professor.service.abstract';
 import { IUniversityService } from '@/university/university.service.abstract';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CreateStudentDto,
   StudentDto,
@@ -12,7 +16,7 @@ import { IFindAllQuery, IStudentService } from './student.service.abstract';
 
 @Injectable()
 export class StudentService implements IStudentService {
-  readonly #previewSelector = {
+  readonly previewSelector = {
     id: true,
     name: true,
     description: true,
@@ -29,43 +33,13 @@ export class StudentService implements IStudentService {
    * @param createStudentDto  Data to create a student entity
    * @returns Newly created student entity
    */
-  async create(createStudentDto: CreateStudentDto) {
-    const university = await this.universityService.findOne(
-      createStudentDto.university,
-    );
-
-    if (!university) {
-      throw new NotFoundException('University not found');
-    }
-
-    const professor = await this.professorService.findOne(
-      createStudentDto.professor,
-    );
-
-    if (!professor) {
-      throw new NotFoundException('Professor not found');
-    }
-
+  async create(createStudentDto: CreateStudentDto): Promise<StudentPreviewDto> {
     return await this.prisma.student.create({
       data: {
         name: createStudentDto.name,
         description: createStudentDto.description,
-        university: {
-          connect: university,
-        },
-        professor: {
-          connect: professor,
-        },
       },
-      select: {
-        ...this.#previewSelector,
-        university: {
-          select: this.#previewSelector,
-        },
-        professor: {
-          select: this.#previewSelector,
-        },
-      },
+      select: this.previewSelector,
     });
   }
 
@@ -92,15 +66,15 @@ export class StudentService implements IStudentService {
         ],
       },
       select: {
-        ...this.#previewSelector,
+        ...this.previewSelector,
         ...(includeUniversity && {
           university: {
-            select: this.#previewSelector,
+            select: this.previewSelector,
           },
         }),
         ...(includeProfessor && {
           professor: {
-            select: this.#previewSelector,
+            select: this.previewSelector,
           },
         }),
       },
@@ -111,12 +85,12 @@ export class StudentService implements IStudentService {
     const student = await this.prisma.student.findUnique({
       where: { id },
       select: {
-        ...this.#previewSelector,
+        ...this.previewSelector,
         university: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
         professor: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
       },
     });
@@ -148,6 +122,16 @@ export class StudentService implements IStudentService {
       if (!university) {
         throw new NotFoundException('University not found');
       }
+
+      const oldUniversity = await this.universityService.findOne(
+        student.university?.id ?? '',
+      );
+
+      if (oldUniversity && oldUniversity.students.length === 1) {
+        throw new BadRequestException(
+          'University must have at least one student',
+        );
+      }
     }
 
     if (updateStudentDto.professor) {
@@ -177,12 +161,12 @@ export class StudentService implements IStudentService {
         }),
       },
       select: {
-        ...this.#previewSelector,
+        ...this.previewSelector,
         university: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
         professor: {
-          select: this.#previewSelector,
+          select: this.previewSelector,
         },
       },
     });
@@ -208,14 +192,14 @@ export class StudentService implements IStudentService {
   ): Promise<StudentPreviewDto[]> {
     return await this.prisma.student.findMany({
       where: { professorId },
-      select: this.#previewSelector,
+      select: this.previewSelector,
     });
   }
 
   async findManyByIds(ids: string[]): Promise<StudentPreviewDto[]> {
     return await this.prisma.student.findMany({
       where: { id: { in: ids } },
-      select: this.#previewSelector,
+      select: this.previewSelector,
     });
   }
 }

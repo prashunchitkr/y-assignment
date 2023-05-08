@@ -17,7 +17,7 @@ export interface IFindAllQuery {
 export abstract class IProfessorService {
   abstract create(
     createProfessorDto: CreateProfessorDto,
-  ): Promise<ProfessorDto>;
+  ): Promise<ProfessorPreviewDto>;
 
   abstract findAll(query: IFindAllQuery): Promise<ProfessorPreviewDto[]>;
 
