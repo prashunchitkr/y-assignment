@@ -1,6 +1,5 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { IStudentService } from '@/student/student.service.abstract';
-import { UniversityModule } from '@/university/university.module';
 import { IUniversityService } from '@/university/university.service.abstract';
 import {
   BadRequestException,

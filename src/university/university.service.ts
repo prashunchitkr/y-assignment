@@ -33,7 +33,9 @@ export class UniversityService implements IUniversityService {
     private readonly professorService: IProfessorService,
   ) {}
 
-  async create(createUniversityDto: CreateUniversityDto) {
+  async create(
+    createUniversityDto: CreateUniversityDto,
+  ): Promise<UniversityPreviewDto> {
     const students = await this.studentService.findManyByIds(
       createUniversityDto.students,
     );
