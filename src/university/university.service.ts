@@ -1,10 +1,6 @@
 import { PrismaService } from '@/prisma/prisma.service';
-import { IProfessorService } from '@/professor/professor.service.abstract';
-import { IStudentService } from '@/student/student.service.abstract';
 import {
   BadRequestException,
-  forwardRef,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -27,28 +23,30 @@ export class UniversityService implements IUniversityService {
     description: true,
   };
 
-  constructor(
-    private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => IStudentService))
-    private readonly studentService: IStudentService,
-    @Inject(forwardRef(() => IProfessorService))
-    private readonly professorService: IProfessorService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(
     createUniversityDto: CreateUniversityDto,
   ): Promise<UniversityPreviewDto> {
-    const students = await this.studentService.findManyByIds(
-      createUniversityDto.students,
-    );
+    const students = await this.prisma.student.findMany({
+      where: {
+        id: {
+          in: createUniversityDto.students,
+        },
+      },
+    });
 
     if (students.length !== createUniversityDto.students.length) {
       throw new BadRequestException('One or more students were not found');
     }
 
-    const professors = await this.professorService.findManyByIds(
-      createUniversityDto.professors,
-    );
+    const professors = await this.prisma.professor.findMany({
+      where: {
+        id: {
+          in: createUniversityDto.professors,
+        },
+      },
+    });
 
     if (professors.length !== createUniversityDto.professors.length) {
       throw new BadRequestException('One or more professors were not found');

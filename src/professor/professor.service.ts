@@ -1,10 +1,6 @@
 import { PrismaService } from '@/prisma/prisma.service';
-import { IStudentService } from '@/student/student.service.abstract';
-import { IUniversityService } from '@/university/university.service.abstract';
 import {
   BadRequestException,
-  forwardRef,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -24,11 +20,7 @@ export class ProfessorService implements IProfessorService {
     description: true,
   };
 
-  constructor(
-    private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => IUniversityService))
-    private readonly universityService: IUniversityService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Create a professor entity. You must provide a university id
@@ -122,19 +114,23 @@ export class ProfessorService implements IProfessorService {
     }
 
     if (updateProfessorDto.university) {
-      const university = await this.universityService.findOne(
-        updateProfessorDto.university,
-      );
+      const university = await this.prisma.university.findUnique({
+        where: { id: updateProfessorDto.university },
+      });
 
       if (!university) {
         throw new NotFoundException('University not found');
       }
 
-      const oldUniversity = await this.universityService.findOne(
-        professor.university?.id ?? '',
-      );
+      const oldUniProfessorsCount = await this.prisma.professor.count({
+        where: {
+          university: {
+            id: professor.university?.id,
+          },
+        },
+      });
 
-      if (oldUniversity && oldUniversity.professors.length === 1) {
+      if (oldUniProfessorsCount === 1) {
         throw new BadRequestException(
           'Cannot remove the last professor from a university',
         );
@@ -178,17 +174,6 @@ export class ProfessorService implements IProfessorService {
 
     await this.prisma.professor.delete({
       where: { id },
-    });
-  }
-
-  async findManyByIds(ids: string[]): Promise<ProfessorPreviewDto[]> {
-    return await this.prisma.professor.findMany({
-      where: {
-        id: {
-          in: ids,
-        },
-      },
-      select: this.previewSelector,
     });
   }
 }

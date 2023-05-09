@@ -1,9 +1,8 @@
-import { forwardRef, Module } from '@nestjs/common';
-import { ProfessorService } from './professor.service';
-import { ProfessorController } from './professor.controller';
 import { PrismaModule } from '@/prisma/prisma.module';
+import { Module } from '@nestjs/common';
+import { ProfessorController } from './professor.controller';
+import { ProfessorService } from './professor.service';
 import { IProfessorService } from './professor.service.abstract';
-import { UniversityModule } from '@/university/university.module';
 
 @Module({
   controllers: [ProfessorController],
@@ -14,6 +13,6 @@ import { UniversityModule } from '@/university/university.module';
     },
   ],
   exports: [IProfessorService],
-  imports: [PrismaModule, forwardRef(() => UniversityModule)],
+  imports: [PrismaModule],
 })
 export class ProfessorModule {}

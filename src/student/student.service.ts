@@ -1,6 +1,4 @@
 import { PrismaService } from '@/prisma/prisma.service';
-import { IProfessorService } from '@/professor/professor.service.abstract';
-import { IUniversityService } from '@/university/university.service.abstract';
 import {
   BadRequestException,
   Injectable,
@@ -22,11 +20,7 @@ export class StudentService implements IStudentService {
     description: true,
   };
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly universityService: IUniversityService,
-    private readonly professorService: IProfessorService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Create a student entity. You must provide a university and a professor id
@@ -115,19 +109,23 @@ export class StudentService implements IStudentService {
     }
 
     if (updateStudentDto.university) {
-      const university = await this.universityService.findOne(
-        updateStudentDto.university,
-      );
+      const university = await this.prisma.university.findUnique({
+        where: {
+          id: updateStudentDto.university,
+        },
+      });
 
       if (!university) {
         throw new NotFoundException('University not found');
       }
 
-      const oldUniversity = await this.universityService.findOne(
-        student.university?.id ?? '',
-      );
+      const oldUniversityStudents = await this.prisma.student.findMany({
+        where: {
+          universityId: updateStudentDto.university,
+        },
+      });
 
-      if (oldUniversity && oldUniversity.students.length === 1) {
+      if (oldUniversityStudents.length === 1) {
         throw new BadRequestException(
           'University must have at least one student',
         );
@@ -135,9 +133,11 @@ export class StudentService implements IStudentService {
     }
 
     if (updateStudentDto.professor) {
-      const professor = await this.professorService.findOne(
-        updateStudentDto.professor,
-      );
+      const professor = await this.prisma.professor.findUnique({
+        where: {
+          id: updateStudentDto.professor,
+        },
+      });
 
       if (!professor) {
         throw new NotFoundException('Professor not found');
@@ -192,13 +192,6 @@ export class StudentService implements IStudentService {
   ): Promise<StudentPreviewDto[]> {
     return await this.prisma.student.findMany({
       where: { professorId },
-      select: this.previewSelector,
-    });
-  }
-
-  async findManyByIds(ids: string[]): Promise<StudentPreviewDto[]> {
-    return await this.prisma.student.findMany({
-      where: { id: { in: ids } },
       select: this.previewSelector,
     });
   }

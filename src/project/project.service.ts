@@ -22,11 +22,7 @@ export class ProjectService implements IProjectService {
     description: true,
   };
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly companyService: ICompanyService,
-    private readonly universityService: IUniversityService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Create a project entity. You must provide a university or a company id
@@ -35,30 +31,22 @@ export class ProjectService implements IProjectService {
    */
   async create(createProjectDto: CreateProjectDto): Promise<ProjectDto> {
     if (createProjectDto.company) {
-      const company = await this.companyService.findOne(
-        createProjectDto.company,
-      );
+      const company = await this.prisma.company.findUnique({
+        where: { id: createProjectDto.company },
+      });
+
       if (!company) {
         throw new BadRequestException('Company does not exist');
       }
     }
 
     if (createProjectDto.university) {
-      const university = await this.universityService.findOne(
-        createProjectDto.university,
-      );
+      const university = await this.prisma.university.findUnique({
+        where: { id: createProjectDto.university },
+      });
 
       if (!university) {
         throw new BadRequestException('University does not exist');
-      }
-    }
-
-    if (createProjectDto.company) {
-      const company = await this.companyService.findOne(
-        createProjectDto.company,
-      );
-      if (!company) {
-        throw new BadRequestException('Company does not exist');
       }
     }
 
@@ -160,35 +148,22 @@ export class ProjectService implements IProjectService {
     updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectDto> {
     if (updateProjectDto.company) {
-      const company = await this.companyService.findOne(
-        updateProjectDto.company,
-      );
+      const company = await this.prisma.company.findUnique({
+        where: { id: updateProjectDto.company },
+      });
+
       if (!company) {
-        throw new BadRequestException(
-          `Company ${updateProjectDto.company} does not exist`,
-        );
+        throw new BadRequestException('Company does not exist');
       }
     }
 
     if (updateProjectDto.university) {
-      const university = await this.universityService.findOne(
-        updateProjectDto.university,
-      );
-      if (!university) {
-        throw new BadRequestException(
-          `University ${updateProjectDto.university} does not exist`,
-        );
-      }
-    }
+      const university = await this.prisma.university.findUnique({
+        where: { id: updateProjectDto.university },
+      });
 
-    if (updateProjectDto.university) {
-      const university = await this.companyService.findOne(
-        updateProjectDto.university,
-      );
       if (!university) {
-        throw new BadRequestException(
-          `University ${updateProjectDto.university} does not exist`,
-        );
+        throw new BadRequestException('University does not exist');
       }
     }
 

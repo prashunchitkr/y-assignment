@@ -33,6 +33,4 @@ export abstract class IStudentService {
   abstract getProfessorStudents(
     professorId: string,
   ): Promise<StudentPreviewDto[]>;
-
-  abstract findManyByIds(ids: string[]): Promise<StudentPreviewDto[]>;
 }

@@ -1,27 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CompanyService } from './company.service';
+import { CompanyService } from '../company.service';
 import { PrismaService } from '@/prisma/prisma.service';
-
-jest.mock('@/prisma/prisma.service', () => ({
-  PrismaService: jest.fn().mockImplementation(() => ({
-    company: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-    },
-  })),
-}));
+import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 
 describe('CompanyService', () => {
   let service: CompanyService;
-  let prismaService: PrismaService;
+  let prismaService: DeepMockProxy<PrismaService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [CompanyService, PrismaService],
-    }).compile();
+    })
+      .overrideProvider(PrismaService)
+      .useValue(mockDeep<PrismaService>())
+      .compile();
 
     service = module.get<CompanyService>(CompanyService);
-    prismaService = module.get<PrismaService>(PrismaService);
+    prismaService = module.get(PrismaService);
   });
 
   it('should be defined', () => {
@@ -44,7 +39,7 @@ describe('CompanyService', () => {
         projects,
       };
 
-      jest.spyOn(prismaService.company, 'findUnique').mockResolvedValue(result);
+      prismaService.company.findUnique.mockResolvedValue(result);
 
       const company = await service.findOne('1');
 
@@ -55,7 +50,7 @@ describe('CompanyService', () => {
     });
 
     it('should return null if company does not exist', async () => {
-      jest.spyOn(prismaService.company, 'findUnique').mockResolvedValue(null);
+      prismaService.company.findUnique.mockResolvedValue(null);
 
       const company = await service.findOne('1');
 
@@ -78,7 +73,7 @@ describe('CompanyService', () => {
         },
       ];
 
-      jest.spyOn(prismaService.company, 'findMany').mockResolvedValue(result);
+      prismaService.company.findMany.mockResolvedValue(result);
 
       const companies = await service.findAll({
         skip: 0,
@@ -112,7 +107,8 @@ describe('CompanyService', () => {
           projcts: [project],
         },
       ];
-      jest.spyOn(prismaService.company, 'findMany').mockResolvedValue(result);
+
+      prismaService.company.findMany.mockResolvedValue(result);
 
       const companies = await service.findAll({
         skip: 0,

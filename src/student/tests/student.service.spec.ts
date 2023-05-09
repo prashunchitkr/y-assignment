@@ -1,18 +1,19 @@
 import { PrismaService } from '@/prisma/prisma.service';
+import { ProfessorModule } from '@/professor/professor.module';
 import { UniversityModule } from '@/university/university.module';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProfessorService } from './professor.service';
+import { StudentService } from '../student.service';
 
-describe('ProfessorService', () => {
-  let service: ProfessorService;
+describe('StudentService', () => {
+  let service: StudentService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ProfessorService, PrismaService],
-      imports: [UniversityModule],
+      providers: [StudentService, PrismaService],
+      imports: [UniversityModule, ProfessorModule],
     }).compile();
 
-    service = module.get<ProfessorService>(ProfessorService);
+    service = module.get<StudentService>(StudentService);
   });
 
   it('should be defined', () => {

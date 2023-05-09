@@ -29,6 +29,4 @@ export abstract class IProfessorService {
   ): Promise<ProfessorDto>;
 
   abstract remove(id: string): Promise<void>;
-
-  abstract findManyByIds(ids: string[]): Promise<ProfessorPreviewDto[]>;
 }
