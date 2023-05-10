@@ -119,13 +119,13 @@ export class StudentService implements IStudentService {
         throw new NotFoundException('University not found');
       }
 
-      const oldUniversityStudents = await this.prisma.student.findMany({
+      const oldUniversityStudentCount = await this.prisma.student.count({
         where: {
           universityId: updateStudentDto.university,
         },
       });
 
-      if (oldUniversityStudents.length === 1) {
+      if (oldUniversityStudentCount === 1) {
         throw new BadRequestException(
           'University must have at least one student',
         );
@@ -185,14 +185,5 @@ export class StudentService implements IStudentService {
     }
 
     await this.prisma.student.delete({ where: { id } });
-  }
-
-  async getProfessorStudents(
-    professorId: string,
-  ): Promise<StudentPreviewDto[]> {
-    return await this.prisma.student.findMany({
-      where: { professorId },
-      select: this.previewSelector,
-    });
   }
 }

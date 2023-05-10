@@ -1,5 +1,5 @@
 import { PrismaService } from '@/prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ICompanyService, IFindAllQuery } from './company.service.abstract';
 import {
   CompanyDto,
@@ -91,6 +91,12 @@ export class CompanyService implements ICompanyService {
     id: string,
     updateCompanyDto: UpdateCompanyDto,
   ): Promise<CompanyDto> {
+    const company = this.findOne(id);
+
+    if (!company) {
+      throw new NotFoundException(`Company ${id} not found`);
+    }
+
     return await this.prisma.company.update({
       where: { id },
       data: updateCompanyDto,
@@ -108,6 +114,12 @@ export class CompanyService implements ICompanyService {
    * @param id Company id
    */
   async remove(id: string) {
+    const company = await this.findOne(id);
+
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
     await this.prisma.company.delete({
       where: { id },
     });

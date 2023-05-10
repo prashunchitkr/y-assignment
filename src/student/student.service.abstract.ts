@@ -29,8 +29,4 @@ export abstract class IStudentService {
   ): Promise<StudentDto>;
 
   abstract remove(id: string): Promise<void>;
-
-  abstract getProfessorStudents(
-    professorId: string,
-  ): Promise<StudentPreviewDto[]>;
 }

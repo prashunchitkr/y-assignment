@@ -22,8 +22,10 @@ export class PgnotificationService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     try {
       this.pgClient.connect((err) => {
-        this.logger.error(`Error Connecting to Database`);
-        throw err;
+        if (err) {
+          this.logger.error(`Error Connecting to Database`);
+          throw err;
+        }
       });
 
       this.pgClient.query(`LISTEN ${this.NOTIFICATION_CHANNEL}`);

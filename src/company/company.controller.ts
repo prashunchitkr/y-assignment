@@ -114,10 +114,6 @@ export class CompanyController {
     @Param('id') id: string,
     @Body() updateCompanyDto: UpdateCompanyDto,
   ): Promise<CompanyDto> {
-    const company = this.companyService.findOne(id);
-    if (!company) {
-      throw new NotFoundException(`Company ${id} not found`);
-    }
     return await this.companyService.update(id, updateCompanyDto);
   }
 
@@ -136,9 +132,6 @@ export class CompanyController {
     description: 'The record does not exist',
   })
   async remove(@Param('id') id: string) {
-    const company = await this.companyService.findOne(id);
-    if (!company) throw new NotFoundException(`Company ${id} not found`);
-
     await this.companyService.remove(id);
   }
 }

@@ -30,6 +30,12 @@ export class ProjectService implements IProjectService {
    * @returns Newly created project entity
    */
   async create(createProjectDto: CreateProjectDto): Promise<ProjectDto> {
+    if (!createProjectDto.company && !createProjectDto.university) {
+      throw new BadRequestException(
+        'You must provide a company or a university',
+      );
+    }
+
     if (createProjectDto.company) {
       const company = await this.prisma.company.findUnique({
         where: { id: createProjectDto.company },

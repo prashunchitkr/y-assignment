@@ -10,6 +10,7 @@ import {
   Delete,
   Query,
   HttpCode,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -41,7 +42,7 @@ export class UniversityController {
   async create(
     @Body() createUniversityDto: CreateUniversityDto,
   ): Promise<UniversityPreviewDto> {
-    return this.universityService.create(createUniversityDto);
+    return await this.universityService.create(createUniversityDto);
   }
 
   @Get()
@@ -63,15 +64,15 @@ export class UniversityController {
     description: 'The records has been sucessfully retrieved',
     type: [UniversityPreviewDto],
   })
-  findAll(
+  async findAll(
     @Query('skip', new ZodParseIntPipe({ default: 0 })) skip: number,
     @Query('take', new ZodParseIntPipe({ default: 10 })) take: number,
     @Query('name') name?: string,
     @Query('description') description?: string,
     @Query('students', new ZodParseBoolPipe()) includeStudents?: boolean,
     @Query('professors', new ZodParseBoolPipe()) includeProfessors?: boolean,
-  ) {
-    return this.universityService.findAll({
+  ): Promise<UniversityPreviewDto[]> {
+    return await this.universityService.findAll({
       skip,
       take,
       name,
@@ -87,8 +88,14 @@ export class UniversityController {
     description: 'The record has been sucessfully retrieved',
     type: UniversityDto,
   })
-  findOne(@Param('id') id: string) {
-    return this.universityService.findOne(id);
+  async findOne(@Param('id') id: string): Promise<UniversityDto> {
+    const university = await this.universityService.findOne(id);
+
+    if (!university) {
+      throw new NotFoundException('University not found');
+    }
+
+    return university;
   }
 
   @Patch(':id')
@@ -97,11 +104,11 @@ export class UniversityController {
     description: 'The record has been sucessfully updated',
     type: UniversityDto,
   })
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateUniversityDto: UpdateUniversityDto,
-  ) {
-    return this.universityService.update(id, updateUniversityDto);
+  ): Promise<UniversityDto> {
+    return await this.universityService.update(id, updateUniversityDto);
   }
 
   @Delete(':id')
@@ -110,7 +117,7 @@ export class UniversityController {
   @ApiNoContentResponse({
     description: 'The record has been sucessfully deleted',
   })
-  remove(@Param('id') id: string) {
-    return this.universityService.remove(id);
+  async remove(@Param('id') id: string) {
+    return await this.universityService.remove(id);
   }
 }
